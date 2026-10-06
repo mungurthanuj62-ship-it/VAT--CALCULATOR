@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mauritius VAT Calculator (15%)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef4f6;--card:#fff;--ink:#0d2b3a;--muted:#5a7480;--line:#d5e2e8;--accent:#0a6c8c;--accent-ink:#fff;--hi:#ffc61a;--hi-ink:#0d2b3a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#08171f;--card:#102632;--ink:#e8f2f6;--muted:#8fa9b5;--line:#1f3e4d;--accent:#3cb4d6;--accent-ink:#06222d;--hi:#ffc61a;--hi-ink:#0d2b3a}}
+:root[data-theme="dark"]{--bg:#08171f;--card:#102632;--ink:#e8f2f6;--muted:#8fa9b5;--line:#1f3e4d;--accent:#3cb4d6;--accent-ink:#06222d;--hi:#ffc61a;--hi-ink:#0d2b3a}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh;display:grid;place-items:center;padding:20px}
+main{width:100%;max-width:460px}
+h1{font-size:clamp(1.8rem,6vw,2.4rem);font-weight:800;margin:0 0 6px;letter-spacing:-.02em}
+p.sub{margin:0 0 22px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+.toggle{display:grid;grid-template-columns:1fr 1fr;background:var(--bg);border-radius:12px;padding:4px;gap:4px;margin-bottom:18px}
+.toggle button{font:inherit;font-weight:600;border:0;background:transparent;color:var(--muted);padding:11px 8px;border-radius:9px;cursor:pointer}
+.toggle button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+label{display:block;font-weight:600;margin-bottom:8px}
+.field{display:flex;align-items:center;border:2px solid var(--line);border-radius:12px;background:var(--bg);padding:0 14px}
+.field:focus-within{border-color:var(--accent)}
+.field span{font-weight:600;color:var(--muted);margin-right:8px}
+.field input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;font-size:1.6rem;font-weight:600;padding:12px 0;outline:none}
+dl{margin:22px 0 0}
+.row{display:flex;justify-content:space-between;align-items:baseline;padding:13px 0;border-top:1px solid var(--line)}
+.row dt{color:var(--muted)}
+.row dd{margin:0;font-weight:600;font-size:1.15rem;font-variant-numeric:tabular-nums}
+.row.result{background:var(--hi);color:var(--hi-ink);border:0;border-radius:12px;padding:14px;margin-top:6px}
+.row.result dt{color:var(--hi-ink);font-weight:600}
+.row.result dd{font-size:1.6rem;font-weight:800}
+.note{margin:14px 2px 0;font-size:.85rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>VAT calculator</h1>
+  <p class="sub">Mauritius VAT at 15%. Amounts in Rs.</p>
+  <div class="card">
+    <div class="toggle" role="group" aria-label="Calculation mode">
+      <button type="button" id="add" aria-pressed="true">Add VAT</button>
+      <button type="button" id="remove" aria-pressed="false">Remove VAT</button>
+    </div>
+    <label for="amt" id="lbl">Price without VAT</label>
+    <div class="field"><span>Rs</span><input id="amt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" value="100"></div>
+    <dl>
+      <div class="row"><dt>Price without VAT</dt><dd id="net">Rs 0.00</dd></div>
+      <div class="row"><dt>VAT (15%)</dt><dd id="vat">Rs 0.00</dd></div>
+      <div class="row result"><dt>Price with VAT</dt><dd id="gross">Rs 0.00</dd></div>
+    </dl>
+    <p class="note" id="note"></p>
+  </div>
+</main>
+<script>
+(function(){
+  var mode='add',amt=document.getElementById('amt');
+  function fmt(c){return 'Rs '+(c/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function calc(){
+    var v=parseFloat(amt.value),c=isFinite(v)&&v>0?Math.round(v*100):0,net,vat,gross;
+    if(mode==='add'){net=c;vat=Math.round(c*15/100);gross=net+vat;}
+    else{gross=c;net=Math.round(c*100/115);vat=gross-net;}
+    document.getElementById('net').textContent=fmt(net);
+    document.getElementById('vat').textContent=fmt(vat);
+    document.getElementById('gross').textContent=fmt(gross);
+    document.getElementById('note').textContent=mode==='add'
+      ?'VAT = price without VAT × 15%.'
+      :'VAT = price with VAT ÷ 1.15, so Rs 115.00 becomes Rs 100.00.';
+  }
+  function set(m){
+    mode=m;
+    document.getElementById('add').setAttribute('aria-pressed',m==='add');
+    document.getElementById('remove').setAttribute('aria-pressed',m==='remove');
+    document.getElementById('lbl').textContent=m==='add'?'Price without VAT':'Price with VAT';
+    calc();
+  }
+  document.getElementById('add').onclick=function(){set('add')};
+  document.getElementById('remove').onclick=function(){set('remove')};
+  amt.addEventListener('input',calc);
+  calc();
+})();
+</script>
+</body>
+</html>
